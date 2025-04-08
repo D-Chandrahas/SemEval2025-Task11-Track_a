@@ -1,10 +1,10 @@
 print("\nLoading Modules...")
-from ToxicityModels import ToxicityClassifier, ToxicityDataset
+from EmotionModels import EmotionClassifier, EmotionDataset
 from train import load_from_dir, BATCH_SIZE
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
-LABELS = ToxicityDataset.labels
+LABELS = EmotionDataset.labels
 
 CLSCR = lambda : print("\x1b[2J\x1b[3J\x1b[1;1H", end="")
 RESET = "\x1b[0m"
@@ -29,7 +29,7 @@ PATH = "D:/Misc/model_2_130059.ckpt"
 
 if __name__ == "__main__":
     print("\nLoading model from", PATH)
-    model = ToxicityClassifier()
+    model = EmotionClassifier()
     model.load(PATH)
     model.to("cuda")
 
