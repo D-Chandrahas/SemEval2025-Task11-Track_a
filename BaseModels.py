@@ -57,7 +57,7 @@ class Roberta(torch.nn.Module):
         return self.train(False)
 
 
-class CustomClassificationHead(torch.nn.Module):
+class ClassificationHead(torch.nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
 
@@ -104,12 +104,8 @@ class EncoderClassifier(torch.nn.Module):
     def __call__(self, text, batch_mode=True):
         return self.forward(text, batch_mode)
 
-    def train_model(self, optimizer, optimizer_kwargs, loss_cls, loss_cls_kwargs, train_data, epochs, valid_fn=None, valid_data=None, save_path="", resume_from=None):
+    def fit(self, optimizer, optimizer_kwargs, loss_cls, loss_cls_kwargs, train_data, valid_data, epochs, loss_target=0.0, save_path="./ckpts/", resume_from=None):
         if save_path and save_path[-1] != "/" and save_path[-1] != "\\": save_path += "/"
-        if valid_fn is not None:
-            self.valid_fn = valid_fn
-        else:
-            self.valid_fn = lambda _: ""
 
         if type(train_data) != list and type(train_data) != tuple:
             train_data = (train_data,)
@@ -123,17 +119,18 @@ class EncoderClassifier(torch.nn.Module):
             start_epoch = epoch + 1
             optimizer.load_state_dict(optimizer_state_dict)
 
-        num_batches_list = list(map(len, train_data))
-        fmts = [len(str(num)) for num in num_batches_list]
+        num_batches_list_train = list(map(len, train_data))
+        num_batches_list_valid = list(map(len, valid_data))
 
         for epoch in range(start_epoch, epochs+1):
 
             self.train()
-            sum_loss = 0.0
+            train_loss = 0.0
 
-            curr_batch_list = [0 for _ in num_batches_list]
+            curr_batch_list = [0 for _ in num_batches_list_train]
 
             for curr_dataloader_idx, dataloader in enumerate(train_data):
+                n_batches = num_batches_list_train[curr_dataloader_idx]
                 try:
                     loss_mask = dataloader.loss_mask
                 except AttributeError:
@@ -148,18 +145,51 @@ class EncoderClassifier(torch.nn.Module):
                     loss.backward()
                     optimizer.step()
 
-                    sum_loss += loss.item()
+                    train_loss += loss.item()
 
-                    if curr_batch_idx % 100 == 0:
+                    if curr_batch_idx % (n_batches//100 + 1) == 0:
                         curr_batch_list[curr_dataloader_idx] = curr_batch_idx + 1
                         loading_bar = ""
-                        for curr_batch, fmt, num_batches in zip(curr_batch_list, fmts, num_batches_list):
-                            loading_bar += f"{curr_batch:{fmt}}/{num_batches}, "
-                        print(f"Epoch {epoch}/{epochs} - {loading_bar[:-2]}", end="\r", flush=True)
+                        for curr_batch, num_batches in zip(curr_batch_list, num_batches_list_train):
+                            loading_bar += f"{curr_batch}/{num_batches}, "
+                        print(f"Epoch {epoch}/{epochs} - Training : {loading_bar[:-2]}", end="\r", flush=True)
+            train_loss /= sum(num_batches_list_train)
+            print(" " * 100, end="\r")
 
+            with torch.no_grad():
+
+                self.eval()
+                valid_loss = 0.0
+
+                curr_batch_list = [0 for _ in num_batches_list_valid]
+
+                for curr_dataloader_idx, dataloader in enumerate(valid_data):
+                    n_batches = num_batches_list_valid[curr_dataloader_idx]
+                    try:
+                        loss_mask = dataloader.loss_mask
+                    except AttributeError:
+                        loss_mask = slice(None)
+
+                    for curr_batch_idx, (sequences, labels) in enumerate(dataloader):
+                        labels = labels.to(self.device)
+
+                        pred_labels = self.forward(sequences)
+                        loss = criterion(pred_labels[:, loss_mask], labels[:, loss_mask])
+
+                        valid_loss += loss.item()
+
+                        if curr_batch_idx % (n_batches//100 + 1) == 0:
+                            curr_batch_list[curr_dataloader_idx] = curr_batch_idx + 1
+                            loading_bar = ""
+                            for curr_batch, num_batches in zip(curr_batch_list, num_batches_list_valid):
+                                loading_bar += f"{curr_batch}/{num_batches}, "
+                            print(f"Epoch {epoch}/{epochs} - Validation : {loading_bar[:-2]}", end="\r", flush=True)
+                valid_loss /= sum(num_batches_list_valid)
+                print(" " * 100, end="\r")
 
             self.save_ckpt(epoch, optimizer.state_dict(), f"{save_path}model_{epoch}_{datetime.now().strftime('%H%M%S')}.ckpt")
-            print(f"Epoch {epoch}/{epochs} - Avg. Loss:{(sum_loss/sum(num_batches_list)):.4f}; {self.valid_fn(valid_data)}")
+            print(f"Epoch {epoch}/{epochs} - Train loss: {train_loss:.6f}, Valid loss: {valid_loss:.6f}")
+            if valid_loss <= loss_target: break
 
 
     def save_ckpt(self, epoch, optimizer_state_dict, path):
