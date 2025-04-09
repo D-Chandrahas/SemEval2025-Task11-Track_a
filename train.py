@@ -5,9 +5,10 @@ from EmotionModels import EmotionClassifier, EmotionDataset, EmotionDataloader
 TRAIN_DIR = "./train"
 VALID_DIR = "./valid"
 
-# note: max batch size for rtx 3050 mobile(4gb vram) is 4
-# note: max batch size for tesla T4(16gb vram) is 16
-BATCH_SIZE = 4
+# note: max batch size for 4gb vram is 2
+# note: max batch size for 8gb vram is 8
+# note: max batch size for tesla T4(16gb vram) is 64
+BATCH_SIZE = 64
 
 def load_from_dir(dir, batch_size=1):
     data = []
@@ -35,10 +36,10 @@ valid_data = load_from_dir(VALID_DIR, BATCH_SIZE)
 
 if __name__ == "__main__":
     model = EmotionClassifier()
-    # model.load("D:/Misc/model_2_130059.ckpt")
+    # model.load(R"D:\Temp\model_3_111854.ckpt")
     model.to("cuda")
 
-    model.fit(train_data, valid_data, epochs=10, save_path="R:/")
+    model.fit(train_data, valid_data, epochs=10)
 
     # print(model.evaluate(train_data))
-    # print(model.evaluate(valid_data))
+    print(model.evaluate(valid_data))

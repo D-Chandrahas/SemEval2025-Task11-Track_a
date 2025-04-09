@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
 from datetime import datetime
+from os import makedirs
 
 
 class Roberta(torch.nn.Module):
@@ -67,13 +68,12 @@ class ClassificationHead(torch.nn.Module):
 
         self.dropout = torch.nn.Dropout(0.1)
         self.relu = torch.nn.ReLU()
-        self.sigmoid = torch.nn.Sigmoid()
 
     def forward(self, x):
         x = self.relu(self.l1(x))
         x = self.dropout(x)
         x = self.relu(self.l2(x))
-        x = self.sigmoid(self.l3(x))
+        x = self.l3(x)
         return x
 
     def train(self, mode=True):
@@ -106,6 +106,7 @@ class EncoderClassifier(torch.nn.Module):
 
     def fit(self, optimizer, optimizer_kwargs, loss_cls, loss_cls_kwargs, train_data, valid_data, epochs, loss_target=0.0, save_path="./ckpts/", resume_from=None):
         if save_path and save_path[-1] != "/" and save_path[-1] != "\\": save_path += "/"
+        makedirs(save_path, exist_ok=True)
 
         if type(train_data) != list and type(train_data) != tuple:
             train_data = (train_data,)

@@ -50,13 +50,18 @@ class EmotionClassifier(torch.nn.Module):
         self.eval()
         with torch.no_grad():
             for dataloader in data:
-                for sequences, labels in dataloader:
-                    pred_labels = self.model(sequences)
 
+                try:
+                    loss_mask = dataloader.loss_mask
+                except AttributeError:
+                    loss_mask = slice(None)
+
+                for sequences, labels in dataloader:
                     labels = labels.to(self.device)
                     pred_labels = self.model(sequences)
-                    corr += ((pred_labels > 0) == labels).all(dim=-1).sum().item()
+                    corr += ((pred_labels[:, loss_mask] > 0) == labels[:, loss_mask]).all(dim=-1).sum().item()
                     tot += labels.size(0)
+
         return corr/tot
     
     def fit(self, train_data, valid_data, epochs, lr=1e-5, loss_target=0.0, save_path="./ckpts/", resume_from=None):
