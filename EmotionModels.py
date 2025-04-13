@@ -3,19 +3,22 @@ from torch.optim import Adam
 from torch.nn import BCEWithLogitsLoss
 from BaseModels import Roberta, ClassificationHead, EncoderClassifier
 from torch.utils.data import Dataset, DataLoader
+import numpy as np
 import pandas as pd
-from numpy import float32
+from sklearn.metrics import classification_report, multilabel_confusion_matrix
 from collections import defaultdict
 
 
 class EmotionDataset(Dataset):
-    cols = ["text", "anger", "disgust", "fear", "joy", "sadness", "surprise"]
+    cols = np.array(("text", "anger", "disgust", "fear", "joy", "sadness", "surprise"))
     labels = cols[1:]
     def __init__(self, path):
-        (dtypes := defaultdict(lambda: float32))["text"] = str
+        (dtypes := defaultdict(lambda: np.float32))["text"] = str
         self.data = pd.read_csv(path, header=0, dtype=dtypes)
-        self.data = self.data.reindex(columns=self.cols, fill_value=float32(-1))
+        self.data = self.data.reindex(columns=self.cols, fill_value=np.float32(-1))
         self.loss_mask = [(x >= 0) for x in self.data.iloc[0, 1:]]
+        self.labels = self.__class__.labels[self.loss_mask]
+        self.lang = path[-7:-4]
 
     def __len__(self):
         return len(self.data)
@@ -27,6 +30,8 @@ class EmotionDataset(Dataset):
 class EmotionDataloader(DataLoader):
     def __init__(self, dataset, batch_size=1):
         self.loss_mask = dataset.loss_mask
+        self.labels = dataset.labels
+        self.lang = dataset.lang
         super().__init__(dataset, batch_size)
 
 
@@ -46,23 +51,25 @@ class EmotionClassifier(torch.nn.Module):
     def evaluate(self, data):
         if type(data) != list and type(data) != tuple:
             data = (data,)
-        corr, tot = 0, 0
         self.eval()
         with torch.no_grad():
             for dataloader in data:
+                y_true, y_pred = [], []
+                loss_mask = dataloader.loss_mask
+                labels = dataloader.labels
 
-                try:
-                    loss_mask = dataloader.loss_mask
-                except AttributeError:
-                    loss_mask = slice(None)
-
-                for sequences, labels in dataloader:
-                    labels = labels.to(self.device)
+                for sequences, true_labels in dataloader:
+                    y_true.append((true_labels[:, loss_mask]).numpy(force=True))
                     pred_labels = self.model(sequences)
-                    corr += ((pred_labels[:, loss_mask] > 0) == labels[:, loss_mask]).all(dim=-1).sum().item()
-                    tot += labels.size(0)
+                    y_pred.append((pred_labels[:, loss_mask] > 0).numpy(force=True))
 
-        return corr/tot
+                y_true = np.concatenate(y_true, axis=0, dtype=np.int32, casting="unsafe")
+                y_pred = np.concatenate(y_pred, axis=0, dtype=np.int32, casting="unsafe")
+                print("\n", dataloader.lang, "dataset")
+                print(classification_report(y_true, y_pred, target_names=labels, zero_division=0.0))
+                # for label, conf_mat in zip(labels, multilabel_confusion_matrix(y_true, y_pred)):
+                #     print(f"{label}:\n{conf_mat}\n")
+        
     
     def fit(self, train_data, valid_data, epochs, lr=1e-5, loss_target=0.0, save_path="./ckpts/", resume_from=None):
         return self.model.fit(Adam, {"lr": lr}, BCEWithLogitsLoss, {}, train_data, valid_data, epochs, loss_target, save_path, resume_from)
