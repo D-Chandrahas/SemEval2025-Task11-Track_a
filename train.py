@@ -35,12 +35,13 @@ valid_data = load_from_dir(VALID_DIR, BATCH_SIZE)
 
 
 if __name__ == "__main__":
-    # model = EmotionClassifier("FacebookAI/xlm-roberta-base") # from_pretrained=True)
-    # model.load(R"D:\Misc\model_32_181509.ckpt")
-    model = EmotionClassifier.from_trained(R"D:\Misc\xlm-roberta.pth", True)
+    # model = EmotionClassifier("FacebookAI/xlm-roberta-base") #, from_pretrained=True)
+    # model.load(R"D:\Misc\model_5_170139.ckpt")
+    model = EmotionClassifier.from_trained(R"D:\Misc\xlm-roberta1.pth", True)
     model.to("cuda")
+    # model.save(R"D:\Misc\xlm-roberta1.pth", "Epochs=5; BCEWithLogitsLoss: train_loss<0.3, valid_loss=0.39; optimizer: Adam, lr=1e-5; batch_size=4; train_data(0.8, sorted)=[deu, eng, esp]; random_state=7;")
 
-    # model.fit(train_data, valid_data, epochs=35, lr=1e-5, resume_from="/content/ckpts/model_20_145320.ckpt")
+    # model.fit(train_data, valid_data, epochs=5, lr=1e-5)
 
     # model.evaluate(train_data)
     model.evaluate(valid_data)
@@ -48,45 +49,45 @@ if __name__ == "__main__":
 #  DEU DATASET
 #               precision    recall  f1-score   support
 
-#        anger       0.77      0.52      0.62       151
-#      disgust       0.62      0.61      0.61       161
-#         fear       0.59      0.20      0.30        50
-#          joy       0.66      0.61      0.64       114
-#      sadness       0.56      0.50      0.53       103
-#     surprise       0.29      0.27      0.28        37
+#        anger       0.66      0.78      0.72       151
+#      disgust       0.57      0.79      0.66       161
+#         fear       0.39      0.44      0.42        50
+#          joy       0.66      0.68      0.67       114
+#      sadness       0.64      0.50      0.57       103
+#     surprise       0.25      0.76      0.37        37
 
-#    micro avg       0.62      0.52      0.56       616
-#    macro avg       0.58      0.45      0.50       616
-# weighted avg       0.63      0.52      0.56       616
-#  samples avg       0.39      0.37      0.37       616
+#    micro avg       0.55      0.69      0.61       616
+#    macro avg       0.53      0.66      0.57       616
+# weighted avg       0.59      0.69      0.62       616
+#  samples avg       0.48      0.51      0.48       616
 
 
 #  ENG DATASET
 #               precision    recall  f1-score   support
 
-#        anger       0.31      0.43      0.36        60
-#         fear       0.77      0.74      0.75       336
-#          joy       0.73      0.43      0.54       146
-#      sadness       0.58      0.70      0.64       189
-#     surprise       0.58      0.60      0.59       161
+#        anger       0.64      0.45      0.53        60
+#         fear       0.89      0.57      0.69       336
+#          joy       0.81      0.55      0.66       146
+#      sadness       0.75      0.51      0.61       189
+#     surprise       0.65      0.63      0.64       161
 
-#    micro avg       0.64      0.63      0.64       892
-#    macro avg       0.60      0.58      0.58       892
-# weighted avg       0.66      0.63      0.64       892
-#  samples avg       0.55      0.57      0.53       892
+#    micro avg       0.78      0.56      0.65       892
+#    macro avg       0.75      0.54      0.63       892
+# weighted avg       0.79      0.56      0.65       892
+#  samples avg       0.65      0.53      0.56       892
 
 
 #  ESP DATASET
 #               precision    recall  f1-score   support
 
-#        anger       0.76      0.62      0.68       100
-#      disgust       0.78      0.78      0.78       120
-#         fear       0.60      0.81      0.69        47
-#          joy       0.84      0.88      0.86       130
-#      sadness       0.63      0.95      0.75        60
-#     surprise       0.84      0.64      0.73        75
+#        anger       0.68      0.86      0.76       100
+#      disgust       0.69      0.87      0.77       120
+#         fear       0.93      0.89      0.91        47
+#          joy       0.90      0.76      0.82       130
+#      sadness       0.87      0.77      0.81        60
+#     surprise       0.76      0.79      0.77        75
 
-#    micro avg       0.75      0.78      0.76       532
-#    macro avg       0.74      0.78      0.75       532
-# weighted avg       0.77      0.78      0.76       532
-#  samples avg       0.79      0.81      0.77       532
+#    micro avg       0.77      0.82      0.80       532
+#    macro avg       0.80      0.82      0.81       532
+# weighted avg       0.79      0.82      0.80       532
+#  samples avg       0.82      0.85      0.81       532
