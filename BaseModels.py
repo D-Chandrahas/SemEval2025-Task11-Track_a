@@ -1,16 +1,20 @@
 import torch
 import torch.nn.functional as F
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoModel, AutoConfig
 from datetime import datetime
 from os import makedirs
 
 
 class Roberta(torch.nn.Module):
-    def __init__(self, model_name):
+    def __init__(self, model_name, from_pretrained):
         super().__init__()
         self.device = "cpu"
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.roberta = AutoModel.from_pretrained(model_name, add_pooling_layer=False)
+        if from_pretrained:
+            self.roberta = AutoModel.from_pretrained(model_name, add_pooling_layer=False)
+        else:
+            config = AutoConfig.from_pretrained(model_name)
+            self.roberta = AutoModel.from_config(config, add_pooling_layer=False)
         self.config = self.roberta.config
 
     def to(self, device):

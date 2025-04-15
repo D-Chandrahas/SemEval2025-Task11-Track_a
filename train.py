@@ -35,8 +35,8 @@ valid_data = load_from_dir(VALID_DIR, BATCH_SIZE)
 
 
 if __name__ == "__main__":
-    model = EmotionClassifier()
-    model.load(R"D:\Misc\model_20_145320.ckpt")
+    model = EmotionClassifier() # from_pretrained=True)
+    model.load(R"D:\Misc\model_32_181509.ckpt")
     model.to("cuda")
 
     # model.fit(train_data, valid_data, epochs=10)

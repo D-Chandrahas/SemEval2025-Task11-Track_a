@@ -36,10 +36,10 @@ class EmotionDataloader(DataLoader):
 
 
 class EmotionClassifier(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, from_pretrained=False):
         super().__init__()
         self.device = "cpu"
-        encoder = Roberta("FacebookAI/xlm-roberta-base")
+        encoder = Roberta("FacebookAI/xlm-roberta-base", from_pretrained=from_pretrained)
         classification_head = ClassificationHead(encoder.config.hidden_size, 384, len(EmotionDataset.labels))
         self.model = EncoderClassifier(encoder, classification_head)
 
@@ -65,7 +65,7 @@ class EmotionClassifier(torch.nn.Module):
 
                 y_true = np.concatenate(y_true, axis=0, dtype=np.int32, casting="unsafe")
                 y_pred = np.concatenate(y_pred, axis=0, dtype=np.int32, casting="unsafe")
-                print("\n", dataloader.lang, "dataset")
+                print("\n", dataloader.lang.upper(), "DATASET")
                 print(classification_report(y_true, y_pred, target_names=labels, zero_division=0.0))
                 # for label, conf_mat in zip(labels, multilabel_confusion_matrix(y_true, y_pred)):
                 #     print(f"{label}:\n{conf_mat}\n")
@@ -79,7 +79,7 @@ class EmotionClassifier(torch.nn.Module):
         self.eval()
         with torch.no_grad():
             pred_labels =  self.model(text, batch_mode=False)
-            return (pred_labels > 0).any(dim = 0).tolist()
+            return (pred_labels > 0).any(dim=0).tolist()
         
     def __call__(self, text):
         return self.classify(text)

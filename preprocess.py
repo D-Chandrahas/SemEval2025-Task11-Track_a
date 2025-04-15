@@ -21,8 +21,8 @@ for lang in langs:
 
 for name, dataset in data.items():
 
-    train_data, test_data = train_test_split(dataset, test_size=0.2, shuffle=True)
-    valid_data, test_data = train_test_split(test_data, test_size=0.5, shuffle=True)
+    train_data, test_data = train_test_split(dataset, test_size=0.2, shuffle=True, random_state=7)
+    valid_data, test_data = train_test_split(test_data, test_size=0.5, shuffle=True, random_state=7)
 
     train_data.sort_values("text", key = lambda s: s.str.len(), inplace=True)
     valid_data.sort_values("text", key = lambda s: s.str.len(), inplace=True)
