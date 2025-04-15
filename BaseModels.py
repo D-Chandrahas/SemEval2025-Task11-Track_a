@@ -5,21 +5,21 @@ from datetime import datetime
 from os import makedirs
 
 
-class Roberta(torch.nn.Module):
+class TextEncoder(torch.nn.Module):
     def __init__(self, model_name, from_pretrained):
         super().__init__()
         self.device = "cpu"
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         if from_pretrained:
-            self.roberta = AutoModel.from_pretrained(model_name, add_pooling_layer=False)
+            self.encoder = AutoModel.from_pretrained(model_name, add_pooling_layer=False)
         else:
             config = AutoConfig.from_pretrained(model_name)
-            self.roberta = AutoModel.from_config(config, add_pooling_layer=False)
-        self.config = self.roberta.config
+            self.encoder = AutoModel.from_config(config, add_pooling_layer=False)
+        self.config = self.encoder.config
 
     def to(self, device):
         self.device = device
-        self.roberta.to(device)
+        self.encoder.to(device)
         return self
 
     def forward(self, text, batch_mode=True):
@@ -35,7 +35,7 @@ class Roberta(torch.nn.Module):
                 of_len = input_ids.shape[1] - max_len
                 if of_len > 0:
                     max_sen_len = max_len - 2; stride = 128; step = max_sen_len - stride
-                    config = self.roberta.config
+                    config = self.config
                     pad = 0, (step - (of_len % step)) % step
                     input_ids = F.pad(input_ids[0, 1:-1], pad, mode="constant", value=config.pad_token_id)
                     temp = torch.empty( ( ( input_ids.shape[0] - max_sen_len) // step ) + 1, max_sen_len, dtype=torch.int64)
@@ -50,7 +50,7 @@ class Roberta(torch.nn.Module):
                         attention_mask[-1, -pad[1]:] = 0
                     input_ids = temp
                 input_ids, attention_mask = input_ids.to(self.device), attention_mask.to(self.device)
-        encoded_text = self.roberta(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
+        encoded_text = self.encoder(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
         return encoded_text
 
     def train(self, mode=True):
@@ -73,6 +73,12 @@ class ClassificationHead(torch.nn.Module):
         self.dropout = torch.nn.Dropout(0.1)
         self.relu = torch.nn.ReLU()
 
+        self.config = {
+            "input_size": input_size,
+            "hidden_size": hidden_size,
+            "output_size": output_size
+        }
+
     def forward(self, x):
         x = self.relu(self.l1(x))
         x = self.dropout(x)
@@ -90,11 +96,11 @@ class ClassificationHead(torch.nn.Module):
     
 
 class EncoderClassifier(torch.nn.Module):
-    def __init__(self, encoder, classification_head):
+    def __init__(self, encoder, classifier):
         super().__init__()
         self.device = "cpu"
         self.encoder = encoder.eval()
-        self.classifier = classification_head.eval()
+        self.classifier = classifier.eval()
 
     def to(self, device):
         self.device = device
@@ -202,7 +208,7 @@ class EncoderClassifier(torch.nn.Module):
             "epoch": epoch,
             "model_state_dict": self.state_dict(),
             "optimizer_state_dict": optimizer_state_dict
-            }, path)
+        }, path)
 
     def load_ckpt(self, path):
         ckpt = torch.load(path, weights_only=True)
@@ -210,9 +216,25 @@ class EncoderClassifier(torch.nn.Module):
         self.train()
         return ckpt["epoch"], ckpt["optimizer_state_dict"]
 
-    def save(self, path):
-        torch.save({"model_state_dict": self.state_dict()}, path)
+    def save(self, path, comment=None):
+        torch.save({
+            "model_state_dict": self.state_dict(),
+            "config": {
+                "encoder": self.encoder.config._name_or_path,
+                "classifier": self.classifier.config
+            },
+            "comment": comment
+        }, path)
 
     def load(self, path):
         self.load_state_dict(torch.load(path, weights_only=True)["model_state_dict"])
         self.eval()
+    
+    @classmethod
+    def from_trained(cls, path, print_comment=False):
+        arch = torch.load(path, weights_only=True)
+        model = cls(TextEncoder(arch["config"]["encoder"], False),
+                    ClassificationHead(**arch["config"]["classifier"]))
+        model.load_state_dict(arch["model_state_dict"])
+        if print_comment: print(arch["comment"])
+        return model.eval()

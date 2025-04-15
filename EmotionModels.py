@@ -1,7 +1,7 @@
 import torch
 from torch.optim import Adam
 from torch.nn import BCEWithLogitsLoss
-from BaseModels import Roberta, ClassificationHead, EncoderClassifier
+from BaseModels import TextEncoder, ClassificationHead, EncoderClassifier
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import pandas as pd
@@ -36,12 +36,15 @@ class EmotionDataloader(DataLoader):
 
 
 class EmotionClassifier(torch.nn.Module):
-    def __init__(self, from_pretrained=False):
+    def __init__(self, model_name=None, from_pretrained=False, **kwargs):
         super().__init__()
         self.device = "cpu"
-        encoder = Roberta("FacebookAI/xlm-roberta-base", from_pretrained=from_pretrained)
-        classification_head = ClassificationHead(encoder.config.hidden_size, 384, len(EmotionDataset.labels))
-        self.model = EncoderClassifier(encoder, classification_head)
+        if "from_trained" in kwargs:
+            self.model = EncoderClassifier.from_trained(kwargs["from_trained"], kwargs["print_comment"])
+        else:
+            encoder = TextEncoder(model_name, from_pretrained=from_pretrained)
+            classification_head = ClassificationHead(encoder.config.hidden_size, 384, len(EmotionDataset.labels))
+            self.model = EncoderClassifier(encoder, classification_head)
 
     def to(self, device):
         self.device = device
@@ -84,8 +87,12 @@ class EmotionClassifier(torch.nn.Module):
     def __call__(self, text):
         return self.classify(text)
     
-    def save(self, path):
-        self.model.save(path)
+    def save(self, path, comment=None):
+        self.model.save(path, comment)
 
     def load(self, path):
         return self.model.load(path)
+    
+    @classmethod
+    def from_trained(cls, path, print_comment=False):
+        return cls(from_trained=path, print_comment=print_comment)
