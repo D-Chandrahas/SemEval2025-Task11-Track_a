@@ -53,14 +53,6 @@ class TextEncoder(torch.nn.Module):
         encoded_text = self.encoder(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
         return encoded_text
 
-    def train(self, mode=True):
-        self.requires_grad_(mode)
-        super().train(mode)
-        return self
-
-    def eval(self):
-        return self.train(False)
-
 
 class ClassificationHead(torch.nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -85,14 +77,6 @@ class ClassificationHead(torch.nn.Module):
         x = self.relu(self.l2(x))
         x = self.l3(x)
         return x
-
-    def train(self, mode=True):
-        self.requires_grad_(mode)
-        super().train(mode)
-        return self
-
-    def eval(self):
-        return self.train(False)
     
 
 class EncoderClassifier(torch.nn.Module):
@@ -167,7 +151,7 @@ class EncoderClassifier(torch.nn.Module):
             train_loss /= sum(num_batches_list_train)
             print(" " * 100, end="\r")
 
-            with torch.no_grad():
+            with torch.inference_mode():
 
                 self.eval()
                 valid_loss = 0.0

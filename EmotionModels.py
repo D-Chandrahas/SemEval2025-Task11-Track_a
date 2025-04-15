@@ -55,7 +55,7 @@ class EmotionClassifier(torch.nn.Module):
         if type(data) != list and type(data) != tuple:
             data = (data,)
         self.eval()
-        with torch.no_grad():
+        with torch.inference_mode():
             for dataloader in data:
                 y_true, y_pred = [], []
                 loss_mask = dataloader.loss_mask
@@ -80,7 +80,7 @@ class EmotionClassifier(torch.nn.Module):
     def classify(self, text):
         if type(text) != str: raise TypeError("text must be a string")
         self.eval()
-        with torch.no_grad():
+        with torch.inference_mode():
             pred_labels =  self.model(text, batch_mode=False)
             return (pred_labels > 0).any(dim=0).tolist()
         
