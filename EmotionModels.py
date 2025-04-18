@@ -87,6 +87,12 @@ class EmotionClassifier(torch.nn.Module):
     def __call__(self, text):
         return self.classify(text)
     
+    def predict_proba(self, sequences):
+        self.eval()
+        with torch.inference_mode():
+            pred_labels = self.model(sequences)
+            return pred_labels.sigmoid().numpy(force=True)
+    
     def save(self, path, comment=None):
         self.model.save(path, comment)
 

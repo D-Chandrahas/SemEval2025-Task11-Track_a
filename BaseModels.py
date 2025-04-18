@@ -22,15 +22,15 @@ class TextEncoder(torch.nn.Module):
         self.encoder.to(device)
         return self
 
-    def forward(self, text, batch_mode=True):
+    def forward(self, sequences, batch_mode=True, bertviz=False):
         with torch.no_grad():
             if batch_mode:
-                tokenizer_out = self.tokenizer(text, return_tensors='pt', padding=True, truncation=True).to(self.device)
+                tokenizer_out = self.tokenizer(sequences, return_tensors='pt', padding=True, truncation=True).to(self.device)
                 input_ids, attention_mask = tokenizer_out.input_ids, tokenizer_out.attention_mask
             else:
-                if type(text) != str: raise TypeError("text must be a string when batch_mode is False")
+                if type(sequences) != str: raise TypeError("sequences must be a string when batch_mode is False")
                 max_len = self.tokenizer.model_max_length
-                tokenizer_out = self.tokenizer(text, return_tensors='pt', verbose=False)
+                tokenizer_out = self.tokenizer(sequences, return_tensors='pt', verbose=False)
                 input_ids, attention_mask = tokenizer_out.input_ids, tokenizer_out.attention_mask
                 of_len = input_ids.shape[1] - max_len
                 if of_len > 0:
@@ -50,8 +50,11 @@ class TextEncoder(torch.nn.Module):
                         attention_mask[-1, -pad[1]:] = 0
                     input_ids = temp
                 input_ids, attention_mask = input_ids.to(self.device), attention_mask.to(self.device)
-        encoded_text = self.encoder(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
-        return encoded_text
+        encoder_out = self.encoder(input_ids=input_ids, attention_mask=attention_mask)
+        if bertviz:
+            return encoder_out.attentions, self.tokenizer.convert_ids_to_tokens(input_ids[0])
+        else:
+            return encoder_out.last_hidden_state
 
 
 class ClassificationHead(torch.nn.Module):
@@ -92,11 +95,11 @@ class EncoderClassifier(torch.nn.Module):
         self.classifier.to(device)
         return self
 
-    def forward(self, text, batch_mode=True):
-        return self.classifier(self.encoder(text, batch_mode)[:,0])
+    def forward(self, sequences, batch_mode=True):
+        return self.classifier(self.encoder(sequences, batch_mode)[:,0])
     
-    def __call__(self, text, batch_mode=True):
-        return self.forward(text, batch_mode)
+    def __call__(self, sequences, batch_mode=True):
+        return self.forward(sequences, batch_mode)
 
     def fit(self, optimizer, optimizer_kwargs, loss_cls, loss_cls_kwargs, train_data, valid_data, epochs, loss_target=0.0, save_path="./ckpts/", resume_from=None):
         if save_path and save_path[-1] != "/" and save_path[-1] != "\\": save_path += "/"
