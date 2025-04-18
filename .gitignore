@@ -1,0 +1,9 @@
+# Ignore everything
+*
+!.gitignore
+
+# Except Python files
+!*.py
+!*.ipynb
+
+playground.ipynb
