@@ -6,14 +6,14 @@ from os import makedirs
 
 
 class TextEncoder(torch.nn.Module):
-    def __init__(self, model_name, from_pretrained):
+    def __init__(self, model_name, from_pretrained, **kwargs):
         super().__init__()
         self.device = "cpu"
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         if from_pretrained:
-            self.encoder = AutoModel.from_pretrained(model_name, add_pooling_layer=False)
+            self.encoder = AutoModel.from_pretrained(model_name, add_pooling_layer=False, **kwargs)
         else:
-            config = AutoConfig.from_pretrained(model_name)
+            config = AutoConfig.from_pretrained(model_name, **kwargs)
             self.encoder = AutoModel.from_config(config, add_pooling_layer=False)
         self.config = self.encoder.config
 
@@ -25,13 +25,13 @@ class TextEncoder(torch.nn.Module):
     def forward(self, text, batch_mode=True):
         with torch.no_grad():
             if batch_mode:
-                tokenized_text = self.tokenizer(text, return_tensors='pt', padding=True, truncation=True).to(self.device)
-                input_ids, attention_mask = tokenized_text.input_ids, tokenized_text.attention_mask
+                tokenizer_out = self.tokenizer(text, return_tensors='pt', padding=True, truncation=True).to(self.device)
+                input_ids, attention_mask = tokenizer_out.input_ids, tokenizer_out.attention_mask
             else:
                 if type(text) != str: raise TypeError("text must be a string when batch_mode is False")
                 max_len = self.tokenizer.model_max_length
-                tokenized_text = self.tokenizer(text, return_tensors='pt', verbose=False)
-                input_ids, attention_mask = tokenized_text.input_ids, tokenized_text.attention_mask
+                tokenizer_out = self.tokenizer(text, return_tensors='pt', verbose=False)
+                input_ids, attention_mask = tokenizer_out.input_ids, tokenizer_out.attention_mask
                 of_len = input_ids.shape[1] - max_len
                 if of_len > 0:
                     max_sen_len = max_len - 2; stride = 128; step = max_sen_len - stride
@@ -215,9 +215,9 @@ class EncoderClassifier(torch.nn.Module):
         self.eval()
     
     @classmethod
-    def from_trained(cls, path, print_comment=False):
+    def from_trained(cls, path, print_comment=False, **kwargs):
         arch = torch.load(path, weights_only=True)
-        model = cls(TextEncoder(arch["config"]["encoder"], False),
+        model = cls(TextEncoder(arch["config"]["encoder"], False, **kwargs),
                     ClassificationHead(**arch["config"]["classifier"]))
         model.load_state_dict(arch["model_state_dict"])
         if print_comment: print(arch["comment"])

@@ -39,10 +39,10 @@ class EmotionClassifier(torch.nn.Module):
     def __init__(self, model_name=None, from_pretrained=False, **kwargs):
         super().__init__()
         self.device = "cpu"
-        if "from_trained" in kwargs:
-            self.model = EncoderClassifier.from_trained(kwargs["from_trained"], kwargs["print_comment"])
+        if "path" in kwargs:
+            self.model = EncoderClassifier.from_trained(**kwargs)
         else:
-            encoder = TextEncoder(model_name, from_pretrained=from_pretrained)
+            encoder = TextEncoder(model_name, from_pretrained=from_pretrained, **kwargs)
             classification_head = ClassificationHead(encoder.config.hidden_size, 384, len(EmotionDataset.labels))
             self.model = EncoderClassifier(encoder, classification_head)
 
@@ -94,5 +94,5 @@ class EmotionClassifier(torch.nn.Module):
         return self.model.load(path)
     
     @classmethod
-    def from_trained(cls, path, print_comment=False):
-        return cls(from_trained=path, print_comment=print_comment)
+    def from_trained(cls, path, print_comment=False, **kwargs):
+        return cls(path=path, print_comment=print_comment, **kwargs)
