@@ -11,6 +11,7 @@ langs = ("eng", "deu", "esp")
 
 data = {}
 
+# combine train, valid, and test sets for each language
 for lang in langs:
     train = pd.read_csv(f"{DATA_PATH}/train_{lang}.csv")
     valid = pd.read_csv(f"{DATA_PATH}/valid_{lang}.csv")
@@ -18,7 +19,7 @@ for lang in langs:
     data[lang] = pd.concat([train, valid, test], ignore_index=True, copy=False)
     data[lang].drop(columns="id", inplace=True)
 
-
+# randomly split the combined dataset into train, valid, and test sets in 8:1:1 ratio and sort by text length
 for name, dataset in data.items():
 
     train_data, test_data = train_test_split(dataset, test_size=0.2, shuffle=True, random_state=7)

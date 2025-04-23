@@ -10,6 +10,7 @@ VALID_DIR = "./valid"
 # note: max batch size for tesla T4(16gb vram) is 64
 BATCH_SIZE = 2
 
+# loads all files in a directory and returns a list of dataloaders
 def load_from_dir(dir, batch_size=1):
     data = []
     try:

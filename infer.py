@@ -6,6 +6,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 LABELS = EmotionDataset.labels
 
+# ANSI escape sequences for terminal formatting
 CLSCR = lambda : print("\x1b[2J\x1b[3J\x1b[1;1H", end="")
 RESET = "\x1b[0m"
 RESET_TERM = lambda : print(RESET, end="")
@@ -13,6 +14,7 @@ U_LINE = "\x1b[4m"
 HIGHLIGHT = "\x1b[7m"
 RED = "\x1b[30;101m"
 GREEN = "\x1b[30;102m"
+
 U_LINE_TEXT = lambda s : U_LINE + s + RESET
 HIGHLIGHT_TEXT = lambda s : HIGHLIGHT + s + RESET
 RED_TEXT = lambda s : RED + s + RESET
@@ -29,6 +31,8 @@ if __name__ == "__main__":
     model.to("cuda")
 
     model.evaluate(test_data)
+
+    # cli interface for inference
 
     # CLSCR()
     # while(text := input(U_LINE_TEXT("Enter text") + ": ")):
