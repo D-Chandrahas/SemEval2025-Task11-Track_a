@@ -13,7 +13,7 @@ class EmotionDataset(Dataset):
     cols = np.array(("text", "anger", "disgust", "fear", "joy", "sadness", "surprise"))
     labels = cols[1:]
     def __init__(self, path):
-        (dtypes := defaultdict(lambda: np.float32))["text"] = str
+        dtypes = defaultdict(lambda: str, ((label, np.float32) for label in self.labels))
         self.data = pd.read_csv(path, header=0, dtype=dtypes)
         self.data = self.data.reindex(columns=self.cols, fill_value=np.float32(-1))
         self.loss_mask = [(x >= 0) for x in self.data.iloc[0, 1:]]

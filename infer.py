@@ -19,7 +19,7 @@ RED_TEXT = lambda s : RED + s + RESET
 GREEN_TEXT = lambda s : GREEN + s + RESET
 
 
-test_data = load_from_dir("./test", BATCH_SIZE)
+test_data = load_from_dir("./test2", BATCH_SIZE)
 
 MODEL_PATH = R"D:\Misc\xlm-roberta1.pth"
 
@@ -39,6 +39,10 @@ if __name__ == "__main__":
 
     # RESET_TERM()
     # CLSCR()
+
+
+# ./test
+
 
 #  DEU DATASET
 #               precision    recall  f1-score   support
@@ -85,3 +89,53 @@ if __name__ == "__main__":
 #    macro avg       0.77      0.81      0.78       521
 # weighted avg       0.77      0.82      0.78       521
 #  samples avg       0.78      0.84      0.79       521
+
+
+# ./test2
+
+
+#  DEU DATASET
+#               precision    recall  f1-score   support
+
+#        anger       0.76      0.88      0.82       785
+#      disgust       0.69      0.86      0.76       847
+#         fear       0.57      0.61      0.59       259
+#          joy       0.80      0.82      0.81       573
+#      sadness       0.86      0.66      0.75       533
+#     surprise       0.29      0.78      0.42       172
+
+#    micro avg       0.68      0.80      0.74      3169
+#    macro avg       0.66      0.77      0.69      3169
+# weighted avg       0.73      0.80      0.75      3169
+#  samples avg       0.60      0.63      0.60      3169
+
+
+#  ENG DATASET
+#               precision    recall  f1-score   support
+
+#        anger       0.85      0.60      0.70       322
+#         fear       0.93      0.62      0.74      1544
+#          joy       0.89      0.76      0.82       670
+#      sadness       0.89      0.67      0.77       881
+#     surprise       0.87      0.80      0.83       799
+
+#    micro avg       0.90      0.69      0.78      4216
+#    macro avg       0.89      0.69      0.77      4216
+# weighted avg       0.90      0.69      0.77      4216
+#  samples avg       0.78      0.65      0.69      4216
+
+
+#  ESP DATASET
+#               precision    recall  f1-score   support
+
+#        anger       0.64      0.95      0.76       397
+#      disgust       0.78      0.91      0.84       554
+#         fear       0.94      0.90      0.92       197
+#          joy       0.97      0.83      0.90       536
+#      sadness       0.90      0.85      0.87       246
+#     surprise       0.90      0.81      0.85       394
+
+#    micro avg       0.82      0.87      0.85      2324
+#    macro avg       0.85      0.87      0.86      2324
+# weighted avg       0.85      0.87      0.85      2324
+#  samples avg       0.86      0.90      0.86      2324
