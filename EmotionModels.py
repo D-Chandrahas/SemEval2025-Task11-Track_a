@@ -74,7 +74,7 @@ class EmotionClassifier(torch.nn.Module):
                 #     print(f"{label}:\n{conf_mat}\n")
         
     
-    def fit(self, train_loaders, valid_loaders, epochs, lr=1e-5, loss_target=0.0, save_path="./ckpts/", resume_from=None):
+    def fit(self, train_loaders, valid_loaders, epochs, lr=1e-5, loss_target=0.0, save_path="./ckpts/", resume_from=None): # Adam optimizer, BCE loss
         return self.model.fit(Adam, {"lr": lr}, BCEWithLogitsLoss, {}, train_loaders, valid_loaders, epochs, loss_target, save_path, resume_from)
     
     def classify(self, text): # classifies text into boolean values for each label
