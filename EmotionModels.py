@@ -69,7 +69,7 @@ class EmotionClassifier(torch.nn.Module):
                 y_true = np.concatenate(y_true, axis=0, dtype=np.int32, casting="unsafe") # numpy array of true labels
                 y_pred = np.concatenate(y_pred, axis=0, dtype=np.int32, casting="unsafe") # numpy array of predicted labels
                 print("\n", dataloader.lang.upper(), "DATASET")
-                print(classification_report(y_true, y_pred, target_names=labels)) # scikit-learn classification report
+                print(classification_report(y_true, y_pred, target_names=labels, zero_division=np.nan)) # scikit-learn classification report
                 # for label, conf_mat in zip(labels, multilabel_confusion_matrix(y_true, y_pred)):
                 #     print(f"{label}:\n{conf_mat}\n")
         
