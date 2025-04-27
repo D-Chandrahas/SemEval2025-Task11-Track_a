@@ -3,6 +3,8 @@ from EmotionModels import EmotionClassifier, EmotionDataset
 from train import load_from_dir, BATCH_SIZE
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
+from torch.cuda import is_available as cuda_available
+DEVICE = "cuda" if cuda_available() else "cpu"
 
 LABELS = EmotionDataset.labels
 
@@ -21,28 +23,28 @@ RED_TEXT = lambda s : RED + s + RESET
 GREEN_TEXT = lambda s : GREEN + s + RESET
 
 
-test_data = load_from_dir("./test2", BATCH_SIZE)
+test_data = load_from_dir("./test", BATCH_SIZE)
 
 MODEL_PATH = R"D:\Misc\xlm-roberta1.pth"
 
 if __name__ == "__main__":
     print("\nLoading model from", MODEL_PATH)
     model = EmotionClassifier.from_trained(MODEL_PATH, True)
-    model.to("cuda")
+    model.to(DEVICE)
 
-    model.evaluate(test_data)
+    # model.evaluate(test_data)
 
-    # cli interface for inference
+    # --------------cli interface for inference---------------------
+    CLSCR()
+    while(text := input(U_LINE_TEXT("Enter text") + ": ")):
 
-    # CLSCR()
-    # while(text := input(U_LINE_TEXT("Enter text") + ": ")):
+        pred_labels = model(text)
+        emotions = ", ".join(LABELS[pred_labels])
+        print(f"Detected emotions: {HIGHLIGHT_TEXT(emotions)}\n")
 
-    #     pred_labels = model(text)
-    #     emotions = ",".join(LABELS[pred_labels])
-    #     print(f"Detected emotions: {HIGHLIGHT_TEXT(emotions)}\n")
-
-    # RESET_TERM()
-    # CLSCR()
+    RESET_TERM()
+    CLSCR()
+    # --------------------------------------------------------------
 
 
 # ./test

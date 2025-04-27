@@ -1,6 +1,7 @@
 # Ignore everything
 *
 !.gitignore
+!README.md
 
 # Except Python files
 !*.py

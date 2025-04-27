@@ -1,6 +1,8 @@
 from os import walk
 from os.path import join
 from EmotionModels import EmotionClassifier, EmotionDataset, EmotionDataloader
+from torch.cuda import is_available as cuda_available
+DEVICE = "cuda" if cuda_available() else "cpu"
 
 TRAIN_DIR = "./train"
 VALID_DIR = "./valid"
@@ -36,16 +38,24 @@ valid_data = load_from_dir(VALID_DIR, BATCH_SIZE)
 
 
 if __name__ == "__main__":
-    # model = EmotionClassifier("FacebookAI/xlm-roberta-base") #, from_pretrained=True)
-    # model.load(R"D:\Misc\model_5_170139.ckpt")
-    model = EmotionClassifier.from_trained(R"D:\Misc\xlm-roberta1.pth", True)
-    model.to("cuda")
-    # model.save(R"D:\Misc\xlm-roberta1.pth", "Epochs=5; BCEWithLogitsLoss: train_loss<0.3, valid_loss=0.39; optimizer: Adam, lr=1e-5; batch_size=4; train_data(0.8, sorted)=[deu, eng, esp]; random_state=7;")
+    # model = EmotionClassifier("FacebookAI/xlm-roberta-base", from_pretrained=True) # create pretrained model from huggingface
+
+    # model = EmotionClassifier("FacebookAI/xlm-roberta-base") # create new model
+    # model.load(R"D:\Misc\model_5_170139.ckpt") # load from training checkpoint file
+
+    model = EmotionClassifier.from_trained(R"D:\Misc\xlm-roberta1.pth", True) # load from trained model file
+
+
+    model.to(DEVICE)
+
 
     # model.fit(train_data, valid_data, epochs=5, lr=1e-5)
+    # model.save(R"D:\Misc\xlm-roberta1.pth", "Epochs=5; BCEWithLogitsLoss: train_loss<0.3, valid_loss=0.39; optimizer: Adam, lr=1e-5; batch_size=4; train_data(0.8, sorted)=[deu, eng, esp]; random_state=7;")
+
 
     # model.evaluate(train_data)
     model.evaluate(valid_data)
+
 
 #  DEU DATASET
 #               precision    recall  f1-score   support
